@@ -62,3 +62,93 @@ export const getStudentById = async (req, res) => {
     });
   }
 };
+
+// POST /api/students
+export const createStudent = async (req, res) => {
+  try {
+    const { name, email, age, course } = req.body;
+
+    // Validate required fields
+    if (!name || !email || age === undefined || !course) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, age and course are required"
+      });
+    }
+
+    // Validate name
+    if (typeof name !== "string" || name.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Name must be at least 2 characters long"
+      });
+    }
+
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (typeof email !== "string" || !emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid email address"
+      });
+    }
+
+    // Validate age
+    if (
+      !Number.isInteger(age) ||
+      age < 16 ||
+      age > 100
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Age must be an integer between 16 and 100"
+      });
+    }
+
+    // Validate course
+    if (typeof course !== "string" || course.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Course must be at least 2 characters long"
+      });
+    }
+
+    // Check whether email already exists
+    const existingStudent = await prisma.student.findUnique({
+      where: {
+        email: email.toLowerCase().trim()
+      }
+    });
+
+    if (existingStudent) {
+      return res.status(409).json({
+        success: false,
+        message: "A student with this email already exists"
+      });
+    }
+
+    // Create student
+    const student = await prisma.student.create({
+      data: {
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        age,
+        course: course.trim()
+      }
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Student created successfully",
+      data: student
+    });
+  } catch (error) {
+    console.error("Error creating student:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create student"
+    });
+  }
+};
