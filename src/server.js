@@ -1,6 +1,7 @@
 import express from "express";
 
 import studentRoutes from "./routes/studentRoutes.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,6 +19,17 @@ app.get("/", (req, res) => {
 
 // Student routes
 app.use("/api/students", studentRoutes);
+
+// Handle unknown routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found"
+  });
+});
+
+// Central error handler
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
